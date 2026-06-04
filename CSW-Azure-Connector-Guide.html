@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Cisco Secure Workload — Azure Connector Guide</title>
+  <style>
+
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style type="text/css">body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:900px;margin:2rem auto;padding:0 1.5rem;color:#1a1a2e;line-height:1.65}h1{font-size:1.8rem;border-bottom:2px solid #005073;padding-bottom:.5rem}h2{font-size:1.3rem;margin-top:2rem;color:#005073}h3{font-size:1.1rem;color:#333}code{background:#f4f4f4;padding:.15em .4em;border-radius:3px;font-size:.9em}pre{background:#f4f4f4;padding:1rem;border-radius:4px;overflow-x:auto}table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.92em}th{background:#005073;color:#fff;padding:.5rem .75rem;text-align:left}td{padding:.45rem .75rem;border-bottom:1px solid #e2e2e2}tr:nth-child(even) td{background:#f9f9f9}blockquote{border-left:4px solid #005073;margin:0;padding:.5rem 1rem;background:#f0f7fb;color:#444}a{color:#0066cc}
+</style>
+</head>
+<body>
+<h1 id="cisco-secure-workload-azure-connector-guide">Cisco Secure
+Workload — Azure Connector Guide</h1>
+<blockquote>
+<p><strong>Disclaimer:</strong> Community reference guide by Cisco
+Solutions Engineering. Always consult <a href="https://www.cisco.com/c/en/us/products/security/tetration/index.html">official
+Cisco Secure Workload documentation</a> for authoritative guidance.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li><a href="#1-overview">Overview</a></li>
+<li><a href="#2-architecture">Architecture</a></li>
+<li><a href="#3-capabilities">Capabilities</a></li>
+<li><a href="#4-prerequisites">Prerequisites</a></li>
+<li><a href="#5-step-a--azure-app-registration--permissions">Step A —
+Azure App Registration &amp; Permissions</a></li>
+<li><a href="#6-step-b--configure-the-azure-connector-in-csw">Step B —
+Configure the Azure Connector in CSW</a></li>
+<li><a href="#7-step-c--vnet-and-capability-configuration">Step C — VNet
+and Capability Configuration</a></li>
+<li><a href="#8-aks-integration">AKS Integration</a></li>
+<li><a href="#9-segmentation-with-azure-nsgs">Segmentation with Azure
+NSGs</a></li>
+<li><a href="#10-verification">Verification</a></li>
+<li><a href="#11-limits">Limits</a></li>
+<li><a href="#12-troubleshooting">Troubleshooting</a></li>
+<li><a href="#13-related-resources">Related Resources</a></li>
+</ol>
+<hr />
+<h2 id="overview">1. Overview</h2>
+<p>The <strong>Azure connector</strong> in Cisco Secure Workload
+automatically ingests workload inventory and tags from <strong>Azure
+Virtual Networks (VNets)</strong>, streams <strong>Azure VNet flow
+logs</strong>, and enforces segmentation policy using <strong>Azure
+native Network Security Groups (NSGs)</strong> — all without deploying
+CSW agents on every Azure VM.</p>
+<p>The connector supports <strong>multiple Azure subscriptions</strong>
+from a single connector instance, providing unified visibility across a
+complex Azure footprint.</p>
+<h3 id="what-the-azure-connector-provides">What the Azure connector
+provides</h3>
+<table>
+<colgroup>
+<col style="width: 35%" />
+<col style="width: 38%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Description</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Label ingestion</strong></td>
+<td>Azure VM and NIC tags → CSW labels (real-time sync)</td>
+<td>Scope automation</td>
+</tr>
+<tr>
+<td><strong>Flow log ingestion</strong></td>
+<td>VNet flow logs from Azure Storage → CSW for ADM</td>
+<td>Traffic visualization</td>
+</tr>
+<tr>
+<td><strong>Segmentation</strong></td>
+<td>CSW policies → Azure NSG rules (auto-programmed)</td>
+<td>Cloud-native enforcement</td>
+</tr>
+<tr>
+<td><strong>AKS integration</strong></td>
+<td>K8s node/pod/service metadata from AKS</td>
+<td>Container workload visibility</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>No virtual appliance required.</strong> The Azure connector
+runs as a service within the CSW cluster.</p>
+</blockquote>
+<hr />
+<h2 id="architecture">2. Architecture</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────────┐
+│                    Azure Subscription                                  │
+│                                                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  VNet (East US)                                               │   │
+│  │                                                               │   │
+│  │  Azure VMs with tags:                                         │   │
+│  │    Environment=Production, Tier=App, Team=Finance             │   │
+│  │                                                               │   │
+│  │  VNet Flow Logs ─────────────────────► Azure Storage Account  │   │
+│  │                                                               │   │
+│  │  NSGs on subnets/NICs ◄── CSW programs rules                  │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                  ▲ Azure Resource Manager API                         │
+│                  │                                                    │
+│  Azure AD App Registration (client ID + secret/cert)                  │
+│  Custom Role with least-privilege permissions (ARM template)          │
+└──────────────────────────────────────────────────────────────────────┘
+                   ▲
+                   │ Azure REST API
+                   │
+┌──────────────────┴───────────────────────────────────────────────────┐
+│  Cisco Secure Workload (SaaS or On-Prem)                              │
+│  Azure Connector (no virtual appliance needed)                        │
+│                                                                       │
+│  • Polls Azure RM API for tag changes                                 │
+│  • Reads VNet flow logs from Storage Account                          │
+│  • Programs NSG rules when enforcement enabled                        │
+└──────────────────────────────────────────────────────────────────────┘</code></pre>
+<hr />
+<h2 id="capabilities">3. Capabilities</h2>
+<h3 id="label-ingestion">3.1 Label Ingestion</h3>
+<ul>
+<li>Azure VM tags + Network Interface tags → CSW workload labels</li>
+<li>Tags from both VMs and NICs are merged when both are configured</li>
+<li>Real-time synchronization as Azure tags change</li>
+</ul>
+<h3 id="vnet-flow-log-ingestion">3.2 VNet Flow Log Ingestion</h3>
+<ul>
+<li>Requires Azure VNet flow logs (Version 2) enabled and stored in an
+<strong>Azure Storage Account</strong></li>
+<li>Retention: minimum 2 days (connector pulls every minute)</li>
+<li>Storage account must have <strong>storage account key access
+enabled</strong></li>
+</ul>
+<h3 id="segmentation">3.3 Segmentation</h3>
+<ul>
+<li>CSW policies → Azure NSG rules applied to subnets and NICs</li>
+<li><strong>Warning:</strong> All existing NSG rules are removed when
+enforcement is enabled. Back up before enabling.</li>
+</ul>
+<h3 id="aks-integration">3.4 AKS Integration</h3>
+<ul>
+<li>Node, pod, and service metadata from Azure Kubernetes Service
+clusters</li>
+</ul>
+<hr />
+<h2 id="prerequisites">4. Prerequisites</h2>
+<h3 id="azure-requirements">Azure requirements</h3>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Azure subscription ID</label></li>
+<li><label><input type="checkbox"></input><strong>Azure AD App
+Registration</strong> created (Application/Client ID, Directory/Tenant
+ID, Client Secret or Certificate)</label></li>
+<li><label><input type="checkbox"></input><strong>ARM template
+applied</strong> to grant required permissions to the App Registration
+(generated by CSW connector wizard)</label></li>
+<li><label><input type="checkbox"></input>Storage account key access
+<strong>enabled</strong> on storage accounts used for flow
+logs</label></li>
+<li><label><input type="checkbox"></input>For flow logs: VNet flow logs
+enabled (Version 2), published to Azure Storage Account</label></li>
+<li><label><input type="checkbox"></input>For segmentation: Existing NSG rules
+backed up</label></li>
+</ul>
+<h3 id="csw-requirements">CSW requirements</h3>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>CSW cluster administrator
+access</label></li>
+<li><label><input type="checkbox"></input>Target VRF/tenant configured for
+Azure workloads</label></li>
+<li><label><input type="checkbox"></input>Each VNet belongs to exactly
+<strong>one</strong> Azure connector (across all connectors in the
+cluster)</label></li>
+</ul>
+<hr />
+<h2 id="step-a-azure-app-registration-permissions">5. Step A — Azure App
+Registration &amp; Permissions</h2>
+<h3 id="a1-create-an-azure-ad-app-registration">A1 — Create an Azure AD
+App Registration</h3>
+<ol type="1">
+<li>Azure Portal → <strong>Azure Active Directory &gt; App registrations
+&gt; New registration</strong></li>
+<li>Name: e.g., <code>csw-connector-app</code></li>
+<li>Supported account types: <strong>Single tenant</strong></li>
+<li>Click <strong>Register</strong></li>
+<li>Note:
+<ul>
+<li><strong>Application (client) ID</strong></li>
+<li><strong>Directory (tenant) ID</strong></li>
+</ul></li>
+</ol>
+<h3 id="a2-create-client-credentials">A2 — Create client
+credentials</h3>
+<p><strong>Option A — Client secret (simpler):</strong> 1. App
+registration → <strong>Certificates &amp; secrets &gt; New client
+secret</strong> 2. Set expiry (12 or 24 months — plan for rotation) 3.
+Copy the <strong>secret value</strong> immediately (shown only once)</p>
+<p><strong>Option B — Certificate (more secure):</strong> 1. Generate a
+certificate and upload the public key under <strong>Certificates &amp;
+secrets &gt; Certificates</strong> 2. Use the private key in CSW
+connector configuration</p>
+<h3 id="a3-apply-the-arm-template-for-permissions">A3 — Apply the ARM
+template for permissions</h3>
+<p>The CSW connector wizard generates an <strong>Azure Resource Manager
+(ARM) template</strong> that creates a custom role with exactly the
+permissions needed:</p>
+<ol type="1">
+<li><p>Start the connector wizard in CSW (Step B below)</p></li>
+<li><p>Select your desired capabilities</p></li>
+<li><p>Download the ARM template from the wizard</p></li>
+<li><p>Apply in Azure via Portal or CLI:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">az</span> deployment sub create <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--location</span> eastus <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--template-file</span> csw-connector-role.json <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--parameters</span> principalId=<span class="op">&lt;</span>App-Registration-Object-ID<span class="op">&gt;</span></span></code></pre></div></li>
+<li><p>The custom role is applied at the subscription level</p></li>
+</ol>
+<hr />
+<h2 id="step-b-configure-the-azure-connector-in-csw">6. Step B —
+Configure the Azure Connector in CSW</h2>
+<h3 id="b1-navigate-to-connector-configuration">B1 — Navigate to
+connector configuration</h3>
+<ol type="1">
+<li>CSW UI: <strong>Manage &gt; Connectors &gt; Cloud &gt; + Add
+Connector &gt; Azure</strong></li>
+<li>Select capabilities to enable</li>
+</ol>
+<h3 id="b2-enter-azure-credentials">B2 — Enter Azure credentials</h3>
+<table>
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Where to find</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Application (Client) ID</strong></td>
+<td>App Registration client ID</td>
+<td>Azure AD &gt; App registrations &gt; Overview</td>
+</tr>
+<tr>
+<td><strong>Directory (Tenant) ID</strong></td>
+<td>Azure AD tenant ID</td>
+<td>Azure AD &gt; Overview</td>
+</tr>
+<tr>
+<td><strong>Client Secret</strong></td>
+<td>Secret value from Step A2</td>
+<td>Certificates &amp; secrets (saved at creation)</td>
+</tr>
+<tr>
+<td><strong>Subscription ID</strong></td>
+<td>Azure subscription ID</td>
+<td>Subscriptions blade</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The Azure connector supports <strong>multiple subscriptions</strong>
+— you can add additional subscription IDs after initial
+configuration.</p>
+</blockquote>
+<h3 id="b3-vnet-discovery">B3 — VNet discovery</h3>
+<p>After credentials are entered, CSW discovers all VNets across the
+configured subscriptions.</p>
+<hr />
+<h2 id="step-c-vnet-and-capability-configuration">7. Step C — VNet and
+Capability Configuration</h2>
+<p>For each selected VNet:</p>
+<h3 id="labels-inventory">Labels / Inventory</h3>
+<p>Select VM tags and NIC tags to ingest. All tags become CSW
+labels:</p>
+<pre><code>Azure tag: Environment=Production
+CSW label: Environment = Production</code></pre>
+<h3 id="flow-log-ingestion">Flow Log Ingestion</h3>
+<p>Ensure VNet flow logs are enabled in Azure: 1. Azure Portal →
+<strong>Monitor &gt; Network Insights &gt; Traffic &gt; Flow logs &gt; +
+Create</strong> 2. Select target VNet, set to <strong>Version
+2</strong>, choose Storage Account as destination 3. Enable retention:
+2+ days 4. In CSW connector: provide the <strong>Storage Account
+name</strong> and access credentials</p>
+<h3 id="segmentation-1">Segmentation</h3>
+<p>If enabling: 1. Back up current NSG rules first 2. Enable Labels
+(required) 3. Enable Segmentation — CSW takes ownership of NSG rules on
+the VNet subnets/NICs</p>
+<h3 id="apply">Apply</h3>
+<p>Click <strong>Test and Apply</strong>.</p>
+<hr />
+<h2 id="aks-integration-1">8. AKS Integration</h2>
+<p>Enable Kubernetes integration for AKS clusters in the VNet:</p>
+<ol type="1">
+<li><p>Check <strong>Enable Kubernetes / AKS</strong> in the VNet
+configuration</p></li>
+<li><p>CSW collects: pod IPs, namespaces, labels, service IPs, node
+labels</p></li>
+<li><p>Metadata appears in CSW inventory:</p>
+<pre><code>pod/name = payment-api-7d4b9f
+pod/namespace = production
+node/pool = nodepool-finance
+service/name = payment-svc</code></pre></li>
+</ol>
+<hr />
+<h2 id="segmentation-with-azure-nsgs">9. Segmentation with Azure
+NSGs</h2>
+<h3 id="how-it-works">How it works</h3>
+<ol type="1">
+<li>CSW policies (label-based) are translated to NSG rules</li>
+<li>NSG rules applied to subnets and NICs in the configured VNet</li>
+<li>CSW continuously reconciles — adds/removes rules as policies or
+workloads change</li>
+</ol>
+<h3 id="policy-example">Policy example</h3>
+<pre><code>Consumer: DevVMs     (scope: tag/Environment = Development)
+Provider: ProdSQL    (scope: tag/Environment = Production AND tag/Tier = Database)
+Action:   DENY ALL</code></pre>
+<p>CSW creates NSG inbound rule denying DevVMs from ProdSQL — enforced
+natively by Azure.</p>
+<h3 id="warning">Warning</h3>
+<ul>
+<li><p><strong>All existing NSG rules are removed</strong> from
+VNet-associated NSGs when enforcement is enabled</p></li>
+<li><p>Export and save NSG rules before enabling enforcement:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">az</span> network nsg show <span class="at">--name</span> <span class="op">&lt;</span>nsg-name<span class="op">&gt;</span> --resource-group <span class="op">&lt;</span>rg<span class="op">&gt;</span> <span class="op">&gt;</span> nsg-backup.json</span></code></pre></div></li>
+</ul>
+<hr />
+<h2 id="verification">10. Verification</h2>
+<h3 id="check-connector-status">Check connector status</h3>
+<p><strong>Manage &gt; Connectors &gt; Cloud &gt; [Azure
+Connector]</strong> Status should show <strong>Active</strong> with last
+sync time.</p>
+<h3 id="check-inventory-enrichment">Check inventory enrichment</h3>
+<ol type="1">
+<li><strong>Inventory &gt; Workloads</strong> → search by Azure VM
+IP</li>
+<li>Confirm Azure tags appear as CSW labels</li>
+</ol>
+<h3 id="check-nsg-rules-if-segmentation-enabled">Check NSG rules (if
+segmentation enabled)</h3>
+<p>Azure Portal → <strong>Network Security Groups &gt; [CSW-managed
+NSG]</strong> Confirm CSW-programmed rules are present.</p>
+<hr />
+<h2 id="limits">11. Limits</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Subscriptions per connector</td>
+<td>Multiple</td>
+</tr>
+<tr>
+<td>VNets per cluster</td>
+<td>One connector per VNet</td>
+</tr>
+<tr>
+<td>Flow log version</td>
+<td>Version 2 required</td>
+</tr>
+<tr>
+<td>Flow log retention</td>
+<td>Minimum 2 days</td>
+</tr>
+<tr>
+<td>Storage account key access</td>
+<td>Must be enabled</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="troubleshooting">12. Troubleshooting</h2>
+<table>
+<colgroup>
+<col style="width: 56%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authentication failure</td>
+<td>Verify client ID, tenant ID, secret; confirm App Registration is
+active</td>
+</tr>
+<tr>
+<td>No VNets discovered</td>
+<td>Check subscription ID; verify ARM template applied with correct
+permissions</td>
+</tr>
+<tr>
+<td>Flow logs not appearing</td>
+<td>Confirm Version 2 flow logs; storage account key access enabled;
+storage accessible from CSW cluster</td>
+</tr>
+<tr>
+<td>Segmentation not enforcing</td>
+<td>Confirm Labels enabled; verify ARM role has NSG write
+permissions</td>
+</tr>
+<tr>
+<td>AKS pods not visible</td>
+<td>Confirm AKS RBAC allows CSW App Registration to read cluster
+resources</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="related-resources">13. Related Resources</h2>
+<table>
+<colgroup>
+<col style="width: 35%" />
+<col style="width: 38%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Description</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/chandrapati/csw-aws-connector">csw-aws-connector</a></td>
+<td>AWS VPC label ingestion, Security Group enforcement</td>
+<td>AWS workloads</td>
+</tr>
+<tr>
+<td><a href="https://github.com/chandrapati/csw-gcp-connector">csw-gcp-connector</a></td>
+<td>GCP VPC label ingestion, firewall enforcement</td>
+<td>GCP workloads</td>
+</tr>
+<tr>
+<td><a href="https://github.com/chandrapati/CSW-Agent-Installation-Guide">CSW-Agent-Installation-Guide</a></td>
+<td>Deploy CSW agents inside Azure VMs for deep visibility</td>
+<td>Agent-based visibility</td>
+</tr>
+<tr>
+<td><a href="https://github.com/chandrapati/CSW-Policy-Lifecycle">CSW-Policy-Lifecycle</a></td>
+<td>Policy discovery → enforcement workflow</td>
+<td>Policy management</td>
+</tr>
+<tr>
+<td><a href="https://github.com/chandrapati/csw-splunk-integration">csw-splunk-integration</a></td>
+<td>CSW syslog alerts → Splunk</td>
+<td>SecOps alerting</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>Community reference — Cisco Solutions Engineering. Not an
+official Cisco product document.</em></p>
+</body>
+</html>
