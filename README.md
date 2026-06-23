@@ -1,6 +1,6 @@
 # Cisco Secure Workload — Azure Connector Guide
 
-> **Disclaimer:** Community reference guide by Cisco Solutions Engineering. Always consult [official Cisco Secure Workload documentation](https://www.cisco.com/c/en/us/products/security/tetration/index.html) for authoritative guidance.
+> **Disclaimer:** Community reference guide by Cisco Solutions Engineering. Always consult [official Cisco Secure Workload documentation](https://www.cisco.com/c/en/us/products/security/secure-workload/index.html) for authoritative guidance.
 
 Azure connector: VM tag ingestion, VNet flow logs, NSG enforcement, AKS visibility
 

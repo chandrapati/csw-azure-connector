@@ -1,6 +1,6 @@
 # Cisco Secure Workload — Azure Connector Guide
 
-> **Disclaimer:** Community reference guide by Cisco Solutions Engineering. Always consult [official Cisco Secure Workload documentation](https://www.cisco.com/c/en/us/products/security/tetration/index.html) for authoritative guidance.
+> **Disclaimer:** Community reference guide by Cisco Solutions Engineering. Always consult the [official Cisco Secure Workload documentation](https://www.cisco.com/c/en/us/products/security/secure-workload/index.html) — specifically [Configure and Manage Connectors → Azure Connector](https://www.cisco.com/c/en/us/td/docs/security/workload_security/secure_workload/user-guide/4_0/cisco-secure-workload-user-guide-on-prem-v40/configure-and-manage-connectors-for-secure-workload.html) — for authoritative guidance.
 
 ## Table of Contents
 1. [Overview](#1-overview)
@@ -34,7 +34,9 @@ The connector supports **multiple Azure subscriptions** from a single connector 
 | **Segmentation** | CSW policies → Azure NSG rules (auto-programmed) | Cloud-native enforcement |
 | **AKS integration** | K8s node/pod/service metadata from AKS | Container workload visibility |
 
-> **No virtual appliance required.** The Azure connector runs as a service within the CSW cluster.
+> **No virtual appliance required.** Unlike the NetFlow / ERSPAN / ISE connectors, the Azure cloud connector does **not** run on a Secure Workload Ingest or Edge virtual appliance — Secure Workload connects to the Azure Resource Manager APIs directly.
+
+> **Beyond VMs:** The Azure connector also discovers and ingests Standard Load Balancers, Application Gateways, Private Link Services, Private Endpoints, Azure SQL Servers, and Azure Function Apps — modeling frontend IPs/rules as services and backend pools as machines. Only resources associated with the **configured VNet** are discovered (resources in other VNets in the same subscription are not).
 
 ---
 
@@ -82,13 +84,16 @@ The connector supports **multiple Azure subscriptions** from a single connector 
 - Real-time synchronization as Azure tags change
 
 ### 3.2 VNet Flow Log Ingestion
-- Requires Azure VNet flow logs (Version 2) enabled and stored in an **Azure Storage Account**
-- Retention: minimum 2 days (connector pulls every minute)
-- Storage account must have **storage account key access enabled**
+- Requires Azure **VNet flow logs (Version 2)** enabled and stored in an **Azure Storage Account**
+- Retention: minimum 2 days (connector pulls new flow data every minute)
+- Storage account must have **storage account key access enabled**, and be reachable from the Secure Workload cluster
+- **Flow-log limitations to set expectations:** Azure VNet flow logs capture **TCP and UDP only — no ICMP** flow data, and do **not** capture **TCP flag** information
 
 ### 3.3 Segmentation
-- CSW policies → Azure NSG rules applied to subnets and NICs
-- **Warning:** All existing NSG rules are removed when enforcement is enabled. Back up before enabling.
+- Requires Gather Labels to be enabled
+- CSW policies → Azure NSG rules applied to subnets and NICs. Azure NSGs support both Allow and Deny rules
+- When segmentation is enabled for a VNet, the **subnet-level NSG is set to allow-all** and CSW overwrites the **interface-level (NIC) NSGs**; an interface NSG is created automatically if one is not already present. A subnet with **no NSG** is **not** enforced
+- **Warning:** Enabling segmentation **removes all existing rules** from the associated NSGs. CSW automatically backs them up first (see §9); take your own backup as defense-in-depth
 
 ### 3.4 AKS Integration
 - Node, pod, and service metadata from Azure Kubernetes Service clusters
@@ -157,8 +162,8 @@ The CSW connector wizard generates an **Azure Resource Manager (ARM) template** 
 
 ### B1 — Navigate to connector configuration
 
-1. CSW UI: **Manage > Connectors > Cloud > + Add Connector > Azure**
-2. Select capabilities to enable
+1. CSW UI: **Manage > Workloads > Connectors**, then choose the **Azure** cloud connector and start the wizard
+2. Select capabilities to enable. **For a POV, enable Gather Labels + Ingest Flow Logs first and leave Segmentation off** until you are ready to enforce (see §9)
 
 ### B2 — Enter Azure credentials
 
@@ -197,11 +202,13 @@ Ensure VNet flow logs are enabled in Azure:
 4. In CSW connector: provide the **Storage Account name** and access credentials
 
 ### Segmentation
+> **Best practice (per Cisco): do _not_ enable Segmentation during initial configuration.** Gather labels and flows first, build/analyze policies in a workspace, enable enforcement on that workspace, then return to the connector to enable Segmentation for the VNet.
 
-If enabling:
-1. Back up current NSG rules first
-2. Enable Labels (required)
-3. Enable Segmentation — CSW takes ownership of NSG rules on the VNet subnets/NICs
+If/when you enable segmentation:
+1. Confirm **Gather Labels** is enabled (required dependency)
+2. Take your own backup of the NSG rules (CSW also auto-backs them up — see §9)
+3. **Enable enforcement in the workspace _before_ enabling Segmentation for the VNet.** Otherwise **all traffic on that VNet is allowed**
+4. Edit the connector and enable Segmentation for the target VNet — CSW takes ownership of the subnet/NIC NSGs
 
 ### Apply
 Click **Test and Apply**.
@@ -227,40 +234,46 @@ Enable Kubernetes integration for AKS clusters in the VNet:
 ## 9. Segmentation with Azure NSGs
 
 ### How it works
-1. CSW policies (label-based) are translated to NSG rules
-2. NSG rules applied to subnets and NICs in the configured VNet
+1. CSW policies (label-based) are translated to NSG rules. Azure NSGs support both **Allow and Deny** rules
+2. CSW sets the **subnet-level NSG to allow-all** and programs the **interface-level (NIC) NSGs** in the configured VNet (creating an interface NSG if none exists). Subnets with no NSG are not enforced
 3. CSW continuously reconciles — adds/removes rules as policies or workloads change
+
+### Ordering (important)
+- **Enable enforcement on the workspace _first_.** Enabling Segmentation on a VNet not covered by an enforcement-enabled workspace results in **all traffic being allowed** on that VNet
+- Set the workspace **Catch-All to Deny** to block everything not explicitly allowed
+
+### Automatic backup and restore of NSGs
+- **Automatic backup** — when you enable Segmentation for a VNet, CSW automatically backs up the associated NSGs (current state). Only one backup state is kept per VNet; restores use the **most recent** backup state
+- **Automatic restore** — when you **disable** Segmentation, CSW restores the NSGs **it modified** to that most-recent backup; unrelated config is left untouched
+- Toggle via **Manage > Workloads > Connectors > Azure Connector > Resources > Resources Tree**, then select the VNet and set the **Segmentation** radio button
+- Still take an independent backup as defense-in-depth before the first enforcement test:
+  ```bash
+  az network nsg show --name <nsg-name> --resource-group <rg> > nsg-backup.json
+  ```
 
 ### Policy example
 ```
 Consumer: DevVMs     (scope: tag/Environment = Development)
 Provider: ProdSQL    (scope: tag/Environment = Production AND tag/Tier = Database)
-Action:   DENY ALL
+Action:   ALLOW TCP 1433   (only the flows you intend to permit)
+Catch-All (scope default): DENY
 ```
-CSW creates NSG inbound rule denying DevVMs from ProdSQL — enforced natively by Azure.
-
-### Warning
-- **All existing NSG rules are removed** from VNet-associated NSGs when enforcement is enabled
-- Export and save NSG rules before enabling enforcement:
-  ```bash
-  az network nsg show --name <nsg-name> --resource-group <rg> > nsg-backup.json
-  ```
+CSW programs NSG rules permitting only the explicitly-allowed flows; everything else is dropped by the Catch-All — enforced natively by Azure.
 
 ---
 
 ## 10. Verification
 
 ### Check connector status
-**Manage > Connectors > Cloud > [Azure Connector]**
-Status should show **Active** with last sync time.
+**Manage > Workloads > Connectors**, then select the Azure connector. Review the per-VNet rows and confirm a recent sync.
 
 ### Check inventory enrichment
-1. **Inventory > Workloads** → search by Azure VM IP
+1. On the Azure connector page, click a **VNet** row, then click an **IP address** to open its **Inventory Profile**
 2. Confirm Azure tags appear as CSW labels
 
-### Check NSG rules (if segmentation enabled)
-Azure Portal → **Network Security Groups > [CSW-managed NSG]**
-Confirm CSW-programmed rules are present.
+### Check enforcement / NSG rules (if segmentation enabled)
+1. Check enforcement state under **Defend > Enforcement Status** (see *Enforcement Status for Cloud Connectors*)
+2. In the Azure Portal → **Network Security Groups > [CSW-managed NSG]**, confirm CSW-programmed rules are present
 
 ---
 
@@ -269,10 +282,12 @@ Confirm CSW-programmed rules are present.
 | Metric | Limit |
 |--------|-------|
 | Subscriptions per connector | Multiple |
-| VNets per cluster | One connector per VNet |
+| Connectors per VNet | Exactly one — a VNet can belong to only one Azure connector |
 | Flow log version | Version 2 required |
+| Flow log protocols | TCP/UDP only — **no ICMP**; **no TCP flags** captured |
 | Flow log retention | Minimum 2 days |
 | Storage account key access | Must be enabled |
+| Discovery scope | Only resources in the configured VNet |
 
 ---
 
@@ -283,7 +298,9 @@ Confirm CSW-programmed rules are present.
 | Authentication failure | Verify client ID, tenant ID, secret; confirm App Registration is active |
 | No VNets discovered | Check subscription ID; verify ARM template applied with correct permissions |
 | Flow logs not appearing | Confirm Version 2 flow logs; storage account key access enabled; storage accessible from CSW cluster |
-| Segmentation not enforcing | Confirm Labels enabled; verify ARM role has NSG write permissions |
+| Segmentation not enforcing | Confirm Gather Labels enabled and the workspace is enforcing; verify ARM role has NSG write permissions; confirm the subnet has an NSG (subnets without an NSG are not enforced) |
+| VNet unexpectedly allows all traffic | Segmentation was enabled on a VNet whose workspace is not enforcing, or the Catch-All policy is not set to **Deny** |
+| Concrete policy shows **SKIPPED** | Generated rule count exceeds Azure NSG limits — consolidate policies (e.g., larger subnets) |
 | AKS pods not visible | Confirm AKS RBAC allows CSW App Registration to read cluster resources |
 
 ---
