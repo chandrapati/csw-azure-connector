@@ -1,5 +1,7 @@
 # Cisco Secure Workload — Azure Connector Guide
 
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=chandrapati.csw-azure-connector&left_text=visitors)
+
 > **Disclaimer:** Community reference guide by Cisco Solutions Engineering. Always consult [official Cisco Secure Workload documentation](https://www.cisco.com/c/en/us/products/security/secure-workload/index.html) for authoritative guidance.
 
 Azure connector: VM tag ingestion, VNet flow logs, NSG enforcement, AKS visibility
