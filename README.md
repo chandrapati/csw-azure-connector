@@ -18,7 +18,7 @@ Azure connector: VM tag ingestion, VNet flow logs, NSG enforcement, AKS visibili
 
 ---
 
-## Related Cisco Secure Workload Resources
+## CSW Integration Guides & Resources
 
 | Repository | Description | Best for |
 |------------|-------------|---------|
